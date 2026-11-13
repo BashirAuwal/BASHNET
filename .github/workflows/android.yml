@@ -27,16 +27,9 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git zip unzip \
-            autoconf libtool \
-            pkg-config zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            cmake libffi-dev \
-            libssl-dev automake \
-            openjdk-17-jdk
+          RUN apt-get update && \
+    apt-get install -y --no-install-recommends openjdk-17-jdk && \
+    rm -rf /var/lib/apt/lists/*
 
       - name: Install Buildozer
         run: |
