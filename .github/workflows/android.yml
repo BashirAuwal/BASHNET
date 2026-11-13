@@ -8,21 +8,47 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Get BASHNET Code
+      - name: Checkout BASHNET
         uses: actions/checkout@v4
 
-      - name: Build Android APK
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          workdir: .
-          buildozer_version: stable
+          distribution: temurin
+          java-version: '17'
 
-      - name: Upload BASHNET APK
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git zip unzip \
+            autoconf libtool \
+            pkg-config zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            cmake libffi-dev \
+            libssl-dev automake \
+            openjdk-17-jdk
+
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install buildozer cython
+
+      - name: Build BASHNET APK
+        run: |
+          buildozer android debug
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: BASHNET-APK
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: bin/*.apk
