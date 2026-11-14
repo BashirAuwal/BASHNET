@@ -1,63 +1,31 @@
-name: BASHNET Android Build
+[app]
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+title = BASHNET
 
-jobs:
-  build:
-    runs-on: ubuntu-22.04
+package.name = bashnet
 
-    steps:
-      - name: Checkout BASHNET
-        uses: actions/checkout@v4
+package.domain = org.bashnet
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+source.dir = .
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+source.include_exts = py,kv,png,jpg,atlas
 
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git \
-            zip \
-            unzip \
-            autoconf \
-            automake \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            cmake \
-            libffi-dev \
-            libssl-dev
+version = 1.0.0
 
-      - name: Install Buildozer
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install buildozer cython
+requirements = python3,kivy,pyjnius,charset-normalizer==2.1.1
 
-      - name: Check Buildozer License Setting
-        run: |
-          grep "android.accept_sdk_license = True" buildozer.spec
+orientation = portrait
 
-      - name: Build BASHNET APK
-        run: |
-          buildozer android debug
+fullscreen = 0
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: BASHNET-APK
-          path: bin/*.apk
+android.permissions = BLUETOOTH,BLUETOOTH_ADMIN,BLUETOOTH_SCAN,BLUETOOTH_CONNECT,BLUETOOTH_ADVERTISE,ACCESS_FINE_LOCATION
+
+android.archs = arm64-v8a
+
+android.accept_sdk_license = True
+
+p4a.branch = develop
+
+[buildozer]
+
+log_level = 2
