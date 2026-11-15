@@ -32,7 +32,7 @@ class BashnetApp(App):
 
     def build(self):
 
-        self.title = "BASHNET CORE 16"
+        self.title = "BASHNET CORE 17"
 
         self.adapter = BluetoothAdapter.getDefaultAdapter()
 
@@ -40,24 +40,24 @@ class BashnetApp(App):
 
         self.receiver = None
 
-        layout = BoxLayout(
+        main = BoxLayout(
             orientation="vertical",
             padding=20,
             spacing=12
         )
 
         self.status = Label(
-            text="BASHNET CORE 16\nREADY",
-            font_size=22,
+            text="BASHNET CORE 17\nREADY",
+            font_size=20,
             size_hint_y=None,
-            height=70
+            height=80
         )
 
         self.bluetooth_status = Label(
             text="BLUETOOTH: NOT CHECKED",
-            font_size=18,
+            font_size=17,
             size_hint_y=None,
-            height=50
+            height=55
         )
 
         check_button = Button(
@@ -73,7 +73,7 @@ class BashnetApp(App):
         scan_button = Button(
             text="SEARCH NEARBY DEVICES",
             size_hint_y=None,
-            height=55
+            height=60
         )
 
         scan_button.bind(
@@ -95,18 +95,20 @@ class BashnetApp(App):
 
         scroll.add_widget(self.device_list)
 
-        layout.add_widget(self.status)
-        layout.add_widget(self.bluetooth_status)
-        layout.add_widget(check_button)
-        layout.add_widget(scan_button)
-        layout.add_widget(scroll)
+        main.add_widget(self.status)
+        main.add_widget(self.bluetooth_status)
+        main.add_widget(check_button)
+        main.add_widget(scan_button)
+        main.add_widget(scroll)
 
-        return layout
+        return main
 
     def update_label_size(self, instance, size):
 
         instance.height = size[1]
         instance.text_size = (instance.width, None)
+
+    # CHECK BLUETOOTH
 
     def check_bluetooth(self, instance):
 
@@ -118,11 +120,12 @@ class BashnetApp(App):
                     "BLUETOOTH NOT AVAILABLE"
                 )
 
-            elif self.adapter.isEnabled():
+                return
+
+            if self.adapter.isEnabled():
 
                 self.bluetooth_status.text = (
-                    "BLUETOOTH: ON\n"
-                    "BASHNET READY"
+                    "BLUETOOTH: ON\nREADY"
                 )
 
             else:
@@ -133,7 +136,11 @@ class BashnetApp(App):
 
         except Exception as error:
 
-            self.bluetooth_status.text = str(error)
+            self.bluetooth_status.text = (
+                "ERROR:\n" + str(error)
+            )
+
+    # START SCAN
 
     def start_scan(self, instance):
 
@@ -142,46 +149,60 @@ class BashnetApp(App):
             self.status.text = (
                 "BLUETOOTH NOT AVAILABLE"
             )
+
             return
 
-        if not self.adapter.isEnabled():
+        try:
+
+            if not self.adapter.isEnabled():
+
+                self.status.text = (
+                    "PLEASE TURN ON BLUETOOTH"
+                )
+
+                return
+
+            permissions = [
+                "android.permission.BLUETOOTH_SCAN",
+                "android.permission.BLUETOOTH_CONNECT"
+            ]
+
+            if int(BuildVersion.SDK_INT) < 31:
+
+                permissions.append(
+                    "android.permission.ACCESS_FINE_LOCATION"
+                )
+
+            missing = []
+
+            for permission in permissions:
+
+                if not check_permission(permission):
+
+                    missing.append(permission)
+
+            if missing:
+
+                self.status.text = (
+                    "REQUESTING PERMISSIONS..."
+                )
+
+                request_permissions(
+                    missing,
+                    self.permission_result
+                )
+
+                return
+
+            self.begin_discovery()
+
+        except Exception as error:
 
             self.status.text = (
-                "PLEASE TURN ON BLUETOOTH"
-            )
-            return
-
-        permissions = [
-            "android.permission.BLUETOOTH_SCAN",
-            "android.permission.BLUETOOTH_CONNECT"
-        ]
-
-        if int(BuildVersion.SDK_INT) < 31:
-
-            permissions.append(
-                "android.permission.ACCESS_FINE_LOCATION"
+                "SCAN ERROR:\n" + str(error)
             )
 
-        missing = [
-            permission
-            for permission in permissions
-            if not check_permission(permission)
-        ]
-
-        if missing:
-
-            self.status.text = (
-                "REQUESTING PERMISSIONS..."
-            )
-
-            request_permissions(
-                missing,
-                self.permission_result
-            )
-
-            return
-
-        self.begin_discovery()
+    # PERMISSION RESULT
 
     def permission_result(self, permissions, grants):
 
@@ -189,33 +210,37 @@ class BashnetApp(App):
 
             Clock.schedule_once(
                 lambda dt: self.begin_discovery(),
-                0.5
+                1
             )
 
         else:
 
             self.status.text = (
                 "PERMISSION DENIED\n"
-                "Allow Nearby Devices"
+                "ALLOW NEARBY DEVICES"
             )
 
-    def begin_discovery(self):
+    # BEGIN DISCOVERY
+
+    def begin_discovery(self, *args):
 
         try:
+
+            self.devices = {}
+
+            self.device_list.text = (
+                "PREPARING BLUETOOTH..."
+            )
+
+            self.status.text = (
+                "CHECKING BLUETOOTH..."
+            )
 
             if self.adapter.isDiscovering():
 
                 self.adapter.cancelDiscovery()
 
-            self.devices = {}
-
-            self.device_list.text = (
-                "SEARCHING FOR DEVICES..."
-            )
-
-            self.status.text = (
-                "BASHNET DISCOVERY ACTIVE"
-            )
+            # REGISTER RECEIVER
 
             if self.receiver is None:
 
@@ -231,40 +256,97 @@ class BashnetApp(App):
 
                 self.receiver.start()
 
+            # START DISCOVERY
+
+            self.status.text = (
+                "STARTING DISCOVERY..."
+            )
+
             result = self.adapter.startDiscovery()
 
-            if not result:
-
-                scan_permission = check_permission(
-                    "android.permission.BLUETOOTH_SCAN"
-                )
-
-                connect_permission = check_permission(
-                    "android.permission.BLUETOOTH_CONNECT"
-                )
+            if result:
 
                 self.status.text = (
-                    "DISCOVERY FAILED\n"
-                    "Bluetooth State: " +
-                    str(self.adapter.getState()) +
-                    "\nScan Permission: " +
-                    str(scan_permission) +
-                    "\nConnect Permission: " +
-                    str(connect_permission)
+                    "DISCOVERY STARTED!\n"
+                    "WAITING FOR DEVICES..."
+                )
+
+                Clock.schedule_once(
+                    self.check_scan_status,
+                    4
                 )
 
             else:
 
                 self.status.text = (
-                    "DISCOVERY STARTED SUCCESSFULLY"
+                    "DISCOVERY RESULT: FALSE\n"
+                    "ANDROID REFUSED TO START"
                 )
+
+                self.show_permission_status()
 
         except Exception as error:
 
             self.status.text = (
-                "BLUETOOTH ERROR:\n" +
-                str(error)
+                "DISCOVERY ERROR:\n" + str(error)
             )
+
+    # CHECK DISCOVERY
+
+    def check_scan_status(self, dt):
+
+        try:
+
+            scanning = self.adapter.isDiscovering()
+
+            if scanning:
+
+                self.status.text = (
+                    "IS DISCOVERING: TRUE\n"
+                    "SEARCHING FOR DEVICES..."
+                )
+
+            else:
+
+                self.status.text = (
+                    "IS DISCOVERING: FALSE\n"
+                    "SCAN NOT ACTIVE"
+                )
+
+                self.show_permission_status()
+
+        except Exception as error:
+
+            self.status.text = (
+                "STATUS ERROR:\n" + str(error)
+            )
+
+    # SHOW PERMISSIONS
+
+    def show_permission_status(self):
+
+        try:
+
+            scan = check_permission(
+                "android.permission.BLUETOOTH_SCAN"
+            )
+
+            connect = check_permission(
+                "android.permission.BLUETOOTH_CONNECT"
+            )
+
+            self.status.text += (
+                "\nSCAN PERMISSION: " + str(scan) +
+                "\nCONNECT PERMISSION: " + str(connect)
+            )
+
+        except Exception as error:
+
+            self.status.text += (
+                "\nPERMISSION ERROR: " + str(error)
+            )
+
+    # RECEIVE BLUETOOTH DEVICES
 
     def on_bluetooth_broadcast(self, context, intent):
 
@@ -303,6 +385,8 @@ class BashnetApp(App):
                 self.discovery_finished
             )
 
+    # ADD DEVICE
+
     def add_device(self, name, address):
 
         if address in self.devices:
@@ -328,6 +412,8 @@ class BashnetApp(App):
             str(len(self.devices))
         )
 
+    # DISCOVERY FINISHED
+
     def discovery_finished(self, dt):
 
         if self.devices:
@@ -344,6 +430,8 @@ class BashnetApp(App):
                 "DISCOVERY FINISHED\n"
                 "NO DEVICES FOUND"
             )
+
+    # STOP APP
 
     def on_stop(self):
 
