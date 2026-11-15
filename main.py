@@ -2,107 +2,91 @@ from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
-from kivy.uix.scrollview import ScrollView
+
+from jnius import autoclass
+from android.permissions import check_permission
 
 
 class BashnetApp(App):
 
     def build(self):
-        self.title = "BASHNET"
+        self.title = "BASHNET CORE 15"
 
         layout = BoxLayout(
             orientation="vertical",
-            padding=20,
-            spacing=15
+            padding=25,
+            spacing=20
         )
 
         self.status = Label(
-            text="BASHNET CORE 14\n\nSYSTEM ACTIVE",
-            font_size=23,
-            size_hint_y=None,
-            height=120
+            text="BASHNET CORE 15\n\nREADY",
+            font_size=22
         )
 
-        self.device_status = Label(
-            text="BLUETOOTH: NOT SCANNING",
-            font_size=16,
-            size_hint_y=None,
-            height=50
-        )
-
-        self.device_list = Label(
-            text="NO DEVICES FOUND",
-            font_size=17,
-            size_hint_y=None,
-            height=100
-        )
-
-        scan_button = Button(
-            text="START SCANNING",
-            font_size=20,
-            size_hint_y=None,
-            height=60
-        )
-
-        stop_button = Button(
-            text="STOP SCANNING",
-            font_size=20,
-            size_hint_y=None,
-            height=60
+        self.bluetooth_status = Label(
+            text="BLUETOOTH: NOT CHECKED",
+            font_size=18
         )
 
         check_button = Button(
-            text="CHECK BASHNET",
-            font_size=18,
-            size_hint_y=None,
-            height=55
-        )
-
-        scan_button.bind(
-            on_press=self.start_scanning
-        )
-
-        stop_button.bind(
-            on_press=self.stop_scanning
+            text="CHECK BLUETOOTH",
+            font_size=20
         )
 
         check_button.bind(
-            on_press=self.check_system
+            on_press=self.check_bluetooth
         )
 
         layout.add_widget(self.status)
-        layout.add_widget(self.device_status)
-        layout.add_widget(self.device_list)
-        layout.add_widget(scan_button)
-        layout.add_widget(stop_button)
+        layout.add_widget(self.bluetooth_status)
         layout.add_widget(check_button)
 
         return layout
 
-    def start_scanning(self, instance):
-        self.device_status.text = (
-            "BLUETOOTH: SCANNING REQUESTED"
-        )
+    def check_bluetooth(self, instance):
 
-        self.device_list.text = (
-            "BLUETOOTH DISCOVERY MODULE\n"
-            "PREPARING..."
-        )
+        self.bluetooth_status.text = "CHECKING..."
 
-    def stop_scanning(self, instance):
-        self.device_status.text = (
-            "BLUETOOTH: STOPPED"
-        )
+        try:
+            permission = check_permission(
+                "android.permission.BLUETOOTH_CONNECT"
+            )
 
-        self.device_list.text = (
-            "SCANNING STOPPED"
-        )
+            if not permission:
+                self.bluetooth_status.text = (
+                    "PERMISSION NOT GRANTED\n"
+                    "Open App Settings\n"
+                    "Allow Nearby Devices"
+                )
+                return
 
-    def check_system(self, instance):
-        self.status.text = (
-            "BASHNET CORE 14 ACTIVE\n\n"
-            "ANDROID APP RUNNING"
-        )
+            BluetoothAdapter = autoclass(
+                "android.bluetooth.BluetoothAdapter"
+            )
+
+            adapter = BluetoothAdapter.getDefaultAdapter()
+
+            if adapter is None:
+                self.bluetooth_status.text = (
+                    "BLUETOOTH NOT AVAILABLE"
+                )
+
+            elif adapter.isEnabled():
+                self.bluetooth_status.text = (
+                    "BLUETOOTH: ON\n"
+                    "BASHNET READY"
+                )
+
+            else:
+                self.bluetooth_status.text = (
+                    "BLUETOOTH: OFF\n"
+                    "TURN ON BLUETOOTH"
+                )
+
+        except Exception as error:
+            self.bluetooth_status.text = (
+                "BLUETOOTH ERROR:\n" + str(error)
+            )
 
 
 if __name__ == "__main__":
