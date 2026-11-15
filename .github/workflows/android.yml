@@ -35,10 +35,9 @@ steps:
   - name: Build APK
     run: buildozer android debug
 
-        - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: BASHNET-APK
-          path: bin/
-          if-no-files-found: warn
-# BASHNET BUILD
+  - name: Upload APK
+    uses: actions/upload-artifact@v4
+    with:
+      name: BASHNET-APK
+      path: bin/*.apk
+      if-no-files-found: error
