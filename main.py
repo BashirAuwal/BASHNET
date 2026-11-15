@@ -224,14 +224,25 @@ class BashnetApp(App):
                 )
 
                 self.receiver.start()
+result = self.adapter.startDiscovery()
 
-            result = self.adapter.startDiscovery()
+if not result:
+    scan_permission = check_permission(
+        "android.permission.BLUETOOTH_SCAN"
+    )
 
-            if not result:
+    connect_permission = check_permission(
+        "android.permission.BLUETOOTH_CONNECT"
+    )
 
-                self.status.text = (
-                    "DISCOVERY COULD NOT START"
-                )
+    self.status.text = (
+        "DISCOVERY FAILED\n"
+        "Bluetooth State: " + str(self.adapter.getState()) +
+        "\nScan Permission: " + str(scan_permission) +
+        "\nConnect Permission: " + str(connect_permission)
+    )
+else:
+    self.status.text = "DISCOVERY STARTED SUCCESSFULLY"
 
         except Exception as error:
 
