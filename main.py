@@ -139,12 +139,16 @@ class BashnetApp(App):
 
         if self.adapter is None:
 
-            self.status.text = "BLUETOOTH NOT AVAILABLE"
+            self.status.text = (
+                "BLUETOOTH NOT AVAILABLE"
+            )
             return
 
         if not self.adapter.isEnabled():
 
-            self.status.text = "PLEASE TURN ON BLUETOOTH"
+            self.status.text = (
+                "PLEASE TURN ON BLUETOOTH"
+            )
             return
 
         permissions = [
@@ -166,7 +170,9 @@ class BashnetApp(App):
 
         if missing:
 
-            self.status.text = "REQUESTING PERMISSIONS..."
+            self.status.text = (
+                "REQUESTING PERMISSIONS..."
+            )
 
             request_permissions(
                 missing,
@@ -193,11 +199,12 @@ class BashnetApp(App):
                 "Allow Nearby Devices"
             )
 
-   def begin_discovery(self):
+    def begin_discovery(self):
 
         try:
 
             if self.adapter.isDiscovering():
+
                 self.adapter.cancelDiscovery()
 
             self.devices = {}
@@ -238,9 +245,12 @@ class BashnetApp(App):
 
                 self.status.text = (
                     "DISCOVERY FAILED\n"
-                    "Bluetooth State: " + str(self.adapter.getState()) +
-                    "\nScan Permission: " + str(scan_permission) +
-                    "\nConnect Permission: " + str(connect_permission)
+                    "Bluetooth State: " +
+                    str(self.adapter.getState()) +
+                    "\nScan Permission: " +
+                    str(scan_permission) +
+                    "\nConnect Permission: " +
+                    str(connect_permission)
                 )
 
             else:
@@ -249,16 +259,11 @@ class BashnetApp(App):
                     "DISCOVERY STARTED SUCCESSFULLY"
                 )
 
-        except Exception as e:
-
-            self.status.text = (
-                "BLUETOOTH ERROR:\n" + str(e)
-            ) 
-
         except Exception as error:
 
             self.status.text = (
-                "SCAN ERROR:\n" + str(error)
+                "BLUETOOTH ERROR:\n" +
+                str(error)
             )
 
     def on_bluetooth_broadcast(self, context, intent):
@@ -278,6 +283,7 @@ class BashnetApp(App):
                 address = device.getAddress()
 
                 if not name:
+
                     name = "UNKNOWN DEVICE"
 
                 Clock.schedule_once(
@@ -300,6 +306,7 @@ class BashnetApp(App):
     def add_device(self, name, address):
 
         if address in self.devices:
+
             return
 
         self.devices[address] = name
