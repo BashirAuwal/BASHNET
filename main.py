@@ -193,12 +193,11 @@ class BashnetApp(App):
                 "Allow Nearby Devices"
             )
 
-    def begin_discovery(self):
+   def begin_discovery(self):
 
         try:
 
             if self.adapter.isDiscovering():
-
                 self.adapter.cancelDiscovery()
 
             self.devices = {}
@@ -224,25 +223,37 @@ class BashnetApp(App):
                 )
 
                 self.receiver.start()
-result = self.adapter.startDiscovery()
 
-if not result:
-    scan_permission = check_permission(
-        "android.permission.BLUETOOTH_SCAN"
-    )
+            result = self.adapter.startDiscovery()
 
-    connect_permission = check_permission(
-        "android.permission.BLUETOOTH_CONNECT"
-    )
+            if not result:
 
-    self.status.text = (
-        "DISCOVERY FAILED\n"
-        "Bluetooth State: " + str(self.adapter.getState()) +
-        "\nScan Permission: " + str(scan_permission) +
-        "\nConnect Permission: " + str(connect_permission)
-    )
-else:
-    self.status.text = "DISCOVERY STARTED SUCCESSFULLY"
+                scan_permission = check_permission(
+                    "android.permission.BLUETOOTH_SCAN"
+                )
+
+                connect_permission = check_permission(
+                    "android.permission.BLUETOOTH_CONNECT"
+                )
+
+                self.status.text = (
+                    "DISCOVERY FAILED\n"
+                    "Bluetooth State: " + str(self.adapter.getState()) +
+                    "\nScan Permission: " + str(scan_permission) +
+                    "\nConnect Permission: " + str(connect_permission)
+                )
+
+            else:
+
+                self.status.text = (
+                    "DISCOVERY STARTED SUCCESSFULLY"
+                )
+
+        except Exception as e:
+
+            self.status.text = (
+                "BLUETOOTH ERROR:\n" + str(e)
+            ) 
 
         except Exception as error:
 
