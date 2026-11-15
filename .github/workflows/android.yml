@@ -1,6 +1,6 @@
 name: BASHNET Android Build
 
-on:
+"on":
 push:
 branches:
 - main
